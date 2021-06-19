@@ -18,15 +18,15 @@ namespace GLaDOSV3.Module.WinDocs
 
         public string Author() => "BlackOfWorld#8125";
 
-        private static volatile ModuleInfo singleton;
+        private static volatile ModuleInfo _singleton;
         public static IGladosModule GetModule()
         {
-            if (singleton != null) return singleton;
-            singleton = new ModuleInfo();
+            if (_singleton != null) return _singleton;
+            _singleton = new ModuleInfo();
             Assembly currentAssembly = Assembly.GetExecutingAssembly();
             AssemblyLoadContext currentContext = AssemblyLoadContext.GetLoadContext(currentAssembly);
             currentContext.Unloading += OnPluginUnloadingRequested;
-            return singleton;
+            return _singleton;
         }
 
         public void PreLoad(DiscordSocketClient discord, CommandService commands, BotSettingsHelper<string> config, IServiceProvider provider)

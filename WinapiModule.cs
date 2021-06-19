@@ -154,18 +154,18 @@ namespace GLaDOSV3.Module.WinDocs
                         foreach (HtmlNode cell in row.SelectNodes("th|td"))
                         {
                             if (cell.InnerHtml.ToLowerInvariant() == "meaning" || cell.InnerHtml.ToLowerInvariant() == "value") break;
-                            if (cell.Attributes.Count == 1 && cell.Attributes.First().Value == "40%") fix += $"\n{await cleanupString(cell.InnerHtml)}\n";
-                            else fix += $"{await cleanupString(cell.InnerHtml)}";
+                            if (cell.Attributes.Count == 1 && cell.Attributes.First().Value == "40%") fix += $"\n{await this.CleanupString(cell.InnerHtml)}\n";
+                            else fix += $"{await this.CleanupString(cell.InnerHtml)}";
                             ///This the cell.
                         }
                     }
                     response += $"\n*{fix}*\n";
                 } 
-                else response += $"{await cleanupString(parameters.InnerHtml)}\n";
+                else response += $"{await this.CleanupString(parameters.InnerHtml)}\n";
             }
             return response;    
         }
-        private async Task<string> cleanupString(String fix)
+        private async Task<string> CleanupString(String fix)
         {
             fix = fix.Replace("*", "\\*").Replace("\n", " ").Trim();
             Regex r = new Regex("<\\s*a href=\"(.*?)\"[^>]*>(.*?)<\\s*\\/\\s*a>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
