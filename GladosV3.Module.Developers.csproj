@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Iced" Version="1.12.0" />
     <PackageReference Include="Octokit" Version="0.50.0" />
   </ItemGroup>
 
@@ -29,5 +30,6 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="..\GLaDOSV3\$(OutDir)\Modules\"></Copy>
     <Copy SourceFiles="Dependencies\Octokit.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\Dependencies"></Copy>
+    <Copy SourceFiles="Dependencies\Iced.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\Dependencies"></Copy>
   </Target>
 </Project>
