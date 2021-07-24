@@ -3,51 +3,57 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
-using GLaDOSV3.Helpers;
 using Iced.Intel;
+using Keystone;
 
 namespace GLaDOSV3.Module.Developers
 {
-    public class AssemblyModule : ModuleBase<SocketCommandContext>
+    public class AssemblyModule : ModuleBase<ShardedCommandContext>
     {
-#if false
+        const ulong codeRIP = 0x400000;
+#if true
         [Command("asm", RunMode = RunMode.Async)]
         [Remarks("asm <mode> <hex codes>")]
         [Alias("assemble")]
         [Summary("Assemble opcodes into asm with ease!")]
-        public async Task Asm(string mode, [Remainder] string opcodes)
+        public async Task Asm(string mode, [Remainder] string asm)
         {
-            var typing = Context.Channel.TriggerTypingAsync();
-            int bitness = 0;
-            const ulong codeRIP = 0x10000;
+            await Context.Channel.TriggerTypingAsync();
+            Mode bitness;
+            
             switch (mode)
             {
+                case "x16":
+                case "16":
+                    bitness = Mode.X16;
+                    break;
                 case "x64":
                 case "64":
-                    bitness = 64;
+                    bitness = Mode.X64;
                     break;
                 case "x86":
                 case "86":
                 case "32":
                 case "x32":
-                    bitness = 32;
+                    bitness = Mode.X32;
                     break;
                 default:
-                    await Context.Channel.SendMessageAsync("Mode chosen is not x86 or x64!");
+                    await Context.Channel.SendMessageAsync("Mode chosen is not x86, x64 or x16!");
                     return;
             }
             try
             {
-                var c = new Assembler(64);
-                var d = Encoder.Create(64, new StreamCodeWriter(new MemoryStream()));
-                Enum.Parse<Code>()
-                d.Encode(Instruction.Create(Code))
+                
+                using Engine keystone = new Engine(Architecture.X86, bitness) { ThrowOnError = true };
+
+
+                EncodedData enc = keystone.Assemble(asm, codeRIP);
+                await this.ReplyAsync($"Here's your opcodes chef!\n```\n{BitConverter.ToString(enc.Buffer).Replace("-", " ")}\n```");
+
             }
-            finally { typing.Dispose(); }
+            catch { }
         }
 #endif
         [Command("disasm", RunMode = RunMode.Async)]
@@ -56,11 +62,14 @@ namespace GLaDOSV3.Module.Developers
         [Summary("Disassemble opcodes into asm with ease!")]
         public async Task Disasm(string mode, [Remainder] string opcodes)
         {
-            var typing = Context.Channel.TriggerTypingAsync();
-            int bitness = 0;
-            const ulong codeRIP = 0x10000;
+            await Context.Channel.TriggerTypingAsync();
+            int bitness;
             switch (mode)
             {
+                case "x16":
+                case "16":
+                    bitness = 16;
+                    break;
                 case "x64":
                 case "64":
                     bitness = 64;
@@ -72,7 +81,7 @@ namespace GLaDOSV3.Module.Developers
                     bitness = 32;
                     break;
                 default:
-                    await Context.Channel.SendMessageAsync("Mode chosen is not x86 or x64!");
+                    await Context.Channel.SendMessageAsync("Mode chosen is not x86, x64 or x16!");
                     return;
             }
             try
@@ -113,7 +122,7 @@ namespace GLaDOSV3.Module.Developers
                 formatter.Options.SpaceAfterOperandSeparator = true;
                 formatter.Options.FirstOperandCharIndex = 10;
                 var output = new StringOutput();
-                var returnOutput = "```x86asm\n";
+                var returnOutput = "";
                 foreach (var instr in instructions)
                 {
                     // Don't use instr.ToString(), it allocates more, uses masm syntax and default options
@@ -130,11 +139,9 @@ namespace GLaDOSV3.Module.Developers
                     returnOutput += " ";
                     returnOutput += output.ToStringAndReset() + "\n";
                 }
-
-                returnOutput += "```";
-                await Context.Channel.SendMessageAsync(returnOutput);
+                await Context.Channel.SendMessageAsync($"You're welcome\n```x86asm\n{returnOutput}\n```");
             }
-            finally { typing.Dispose(); }
+            catch { }
         }
     }
 }

@@ -9,9 +9,9 @@ using GLaDOSV3.Helpers;
 using HtmlAgilityPack;
 using Octokit;
 
-namespace GLaDOSV3.Module.WinDocs
+namespace GLaDOSV3.Module.Developers
 {
-    public class WinapiModule : ModuleBase<SocketCommandContext>
+    public class WinapiModule : ModuleBase<ShardedCommandContext>
     {
         private Random rnd = new Random();
         [Command("win32", RunMode = RunMode.Async)]
@@ -108,10 +108,10 @@ namespace GLaDOSV3.Module.WinDocs
                         Name = $"Microsoft Docs",
                         Url = resultString
                     },
-                    Description = await GetRequirements(web.DocumentNode)
+                    Description = await this.GetRequirements(web.DocumentNode)
                 };
                 builder.AddField("Syntax", $"```cpp\n{syntax ?? "fuck me error"}\n```");
-                var embeds = Tools.SplitMessage((await GetParameters(web.DocumentNode)), 1024);
+                var embeds = Tools.SplitMessage((await this.GetParameters(web.DocumentNode)), 1024);
                 for (var i = 0; i < embeds.Length; i++)
                 {
                     builder.AddField((i == 0 ? "Parameters" : "\u200B"), embeds[i]);
