@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,8 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Iced.Intel;
 using Keystone;
+using Serilog;
+using Serilog.Core;
 
 namespace GLaDOSV3.Module.Developers
 {
@@ -45,15 +48,13 @@ namespace GLaDOSV3.Module.Developers
             }
             try
             {
-                
                 using Engine keystone = new Engine(Architecture.X86, bitness) { ThrowOnError = true };
-
-
+                
                 EncodedData enc = keystone.Assemble(asm, codeRIP);
                 await this.ReplyAsync($"Here's your opcodes chef!\n```\n{BitConverter.ToString(enc.Buffer).Replace("-", " ")}\n```");
 
             }
-            catch { }
+            catch(Exception ex) { Log.Fatal(ex, ex.Message); }
         }
 #endif
         [Command("disasm", RunMode = RunMode.Async)]
@@ -93,14 +94,14 @@ namespace GLaDOSV3.Module.Developers
                     var @byte = _byte;
                     if (@byte.EndsWith('h')) @byte = _byte[..(@byte.Length - 1)];
                     if (@byte.StartsWith("0x")) @byte = _byte[2..];
-                    if (!int.TryParse(@byte, NumberStyles.HexNumber, null, out int result)) { await Context.Channel.SendMessageAsync("Invalid opcodes found!"); return; }
+                    if (!int.TryParse(@byte, NumberStyles.HexNumber, null, out var result)) { await Context.Channel.SendMessageAsync("Invalid opcodes found!"); return; }
                     bytes.Add((byte)result);
                 }
-                byte[] codeBytes = bytes.ToArray();
+                var codeBytes = bytes.ToArray();
                 var codeReader = new ByteArrayCodeReader(codeBytes);
                 var decoder = Decoder.Create(bitness, codeReader);
                 decoder.IP = codeRIP;
-                ulong endRip = decoder.IP + (uint)codeBytes.Length;
+                var endRip = decoder.IP + (uint)codeBytes.Length;
 
                 var instructions = new List<Instruction>();
                 while (decoder.IP < endRip)
@@ -129,12 +130,12 @@ namespace GLaDOSV3.Module.Developers
                     formatter.Format(instr, output);
                     returnOutput += instr.IP.ToString("X16");
                     returnOutput += " ";
-                    int instrLen = instr.Length;
-                    int byteBaseIndex = (int)(instr.IP - codeRIP);
-                    for (int i = 0; i < instrLen; i++)
+                    var instrLen = instr.Length;
+                    var byteBaseIndex = (int)(instr.IP - codeRIP);
+                    for (var i = 0; i < instrLen; i++)
                         returnOutput += codeBytes[byteBaseIndex + i].ToString("X2");
-                    int missingBytes = 10 - instrLen;
-                    for (int i = 0; i < missingBytes; i++)
+                    var missingBytes = 10 - instrLen;
+                    for (var i = 0; i < missingBytes; i++)
                         returnOutput += "  ";
                     returnOutput += " ";
                     returnOutput += output.ToStringAndReset() + "\n";

@@ -3,6 +3,16 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <Version>$(PublishDir)</Version>
+    <Description></Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE$(TargetPath) </DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE$(TargetPath) </DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,10 +38,17 @@
   <ItemGroup>
     <Folder Include="Dependencies\" />
   </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="PInvoke\keystone.so" DestinationFolder="..\GLaDOSV3\$(OutDir)\PInvoke"></Copy>
+    <Copy SourceFiles="PInvoke\x86\keystone.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\PInvoke\x86"></Copy>
+    <Copy SourceFiles="PInvoke\x64\keystone.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\PInvoke\x64"></Copy>
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="..\GLaDOSV3\$(OutDir)\Modules\"></Copy>
     <Copy SourceFiles="Dependencies\Octokit.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\Dependencies"></Copy>
     <Copy SourceFiles="Dependencies\Iced.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\Dependencies"></Copy>
     <Copy SourceFiles="Dependencies\Keystone.Net.dll" DestinationFolder="..\GLaDOSV3\$(OutDir)\Dependencies"></Copy>
+  </Target>
+  <Target Condition="'$(Configuration)'=='DEBUG'" Name="DebugPostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="..\GLaDOSV3\$(OutDir)\Modules"></Copy>
   </Target>
 </Project>

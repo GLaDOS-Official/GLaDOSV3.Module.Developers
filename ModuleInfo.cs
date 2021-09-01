@@ -16,6 +16,6 @@ namespace GLaDOSV3.Module.Developers
         public override string Version=> "0.0.0.1";
         
 
-        public override string Author => "BlackOfWorld#8125";
+        public override string AuthorLink => "https://github.com/BlackOfWorld";
     }
 }

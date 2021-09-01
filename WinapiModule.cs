@@ -13,7 +13,7 @@ namespace GLaDOSV3.Module.Developers
 {
     public class WinapiModule : ModuleBase<ShardedCommandContext>
     {
-        private Random rnd = new Random();
+        private readonly Random rnd = new Random();
         [Command("win32", RunMode = RunMode.Async)]
         [Remarks("win32 <winapi>")]
         [Summary("Winapi search!")]
@@ -37,12 +37,12 @@ namespace GLaDOSV3.Module.Developers
                     return;
                 }
 
-                string resultString = "";
+                var resultString = "";
                 foreach (var gitResult in searchResult)
                 {
                     var result =
                         await github.Repository.Content.GetAllContents(gitResult.Repository.Id, gitResult.Path);
-                    string content = result[0].Content.ToLowerInvariant();
+                    var content = result[0].Content.ToLowerInvariant();
                     var index = content.IndexOf($"[**{winapi.ToLowerInvariant()}**]", StringComparison.Ordinal)
                                      + 3;
                     if (index <= 10)
@@ -91,9 +91,9 @@ namespace GLaDOSV3.Module.Developers
                     return;
                 }
 
-                var web    = await new HtmlWeb().LoadFromWebAsync(resultString);
-                
-                var syntax = web.DocumentNode.QuerySelector("#main > pre > code")?.InnerText;;
+                var web = await new HtmlWeb().LoadFromWebAsync(resultString);
+
+                var syntax = web.DocumentNode.QuerySelector("#main > pre > code")?.InnerText; ;
                 EmbedBuilder builder = new EmbedBuilder
                 {
                     Color = new Color(this.rnd.Next(256), this.rnd.Next(256), this.rnd.Next(256)), Footer =
@@ -108,7 +108,7 @@ namespace GLaDOSV3.Module.Developers
                         Name = $"Microsoft Docs",
                         Url = resultString
                     },
-                    Description = await this.GetRequirements(web.DocumentNode)
+                    Description = await GetRequirements(web.DocumentNode)
                 };
                 builder.AddField("Syntax", $"```cpp\n{syntax ?? "fuck me error"}\n```");
                 var embeds = Tools.SplitMessage((await this.GetParameters(web.DocumentNode)), 1024);
@@ -117,13 +117,13 @@ namespace GLaDOSV3.Module.Developers
                     builder.AddField((i == 0 ? "Parameters" : "\u200B"), embeds[i]);
                 }
                 {
-                    string[] words = (syntax ?? "fuck me error").ReduceWhitespace().Replace("\n", "").Replace("\r", "").Split(' ');
+                    var words = (syntax ?? "fuck me error").ReduceWhitespace().Replace("\n", "").Replace("\r", "").Split(' ');
                     words = words.Where(f => !f.StartsWith("__")).ToArray();
                     words = words.Where(f => !f.EndsWith("API")).ToArray();
-                    string type                                 = words[0];
-                    string name                                 = words[1][..^1];
-                    string args                                 = "";
-                    for (int i = 2; i < words.Length; i++) args += $"{words[i]} ";
+                    var type = words[0];
+                    var name = words[1][..^1];
+                    var args = "";
+                    for (var i = 2; i < words.Length; i++) args += $"{words[i]} ";
                     args = args[..^5];
                     builder.AddField("Typedef **(BETA)**", $"```cpp\ntypedef {type}(*{name}_t)({args});\n```");
                 }
@@ -139,7 +139,7 @@ namespace GLaDOSV3.Module.Developers
         {
             var parameters = document.QuerySelector("#parameters");
             var response = "";
-            int i = 0;
+            var i = 0;
             while (parameters.NextSibling != null && parameters.NextSibling.Id != "return-value")
             {
                 parameters = parameters.NextSibling;
@@ -147,7 +147,7 @@ namespace GLaDOSV3.Module.Developers
                 if (i++ % 2 == 0 && parameters.Name != "table") { response += $"**{parameters.InnerText}**: "; continue; }
                 if (parameters.Name == "table")
                 {
-                    string fix = "";
+                    var fix = "";
                     foreach (HtmlNode row in parameters.SelectNodes("tr"))
                     {
                         ///This is the row.
@@ -160,12 +160,12 @@ namespace GLaDOSV3.Module.Developers
                         }
                     }
                     response += $"\n*{fix}*\n";
-                } 
+                }
                 else response += $"{await this.CleanupString(parameters.InnerHtml)}\n";
             }
-            return response;    
+            return response;
         }
-        private async Task<string> CleanupString(String fix)
+        private async Task<string> CleanupString(string fix)
         {
             fix = fix.Replace("*", "\\*").Replace("\n", " ").Trim();
             Regex r = new Regex("<\\s*a href=\"(.*?)\"[^>]*>(.*?)<\\s*\\/\\s*a>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -191,7 +191,7 @@ namespace GLaDOSV3.Module.Developers
             foreach (Match t in matches) fix = fix.Replace(t.Groups[0].Value, $"**{t.Groups[1]}**");
             return fix;
         }
-        private async Task<string> GetRequirements(HtmlNode document)
+        private static async Task<string> GetRequirements(HtmlNode document)
         {
             var requirements = document.QuerySelector("#requirements");
             requirements = requirements.NextSibling.NextSibling;
@@ -200,9 +200,9 @@ namespace GLaDOSV3.Module.Developers
             for (var i = 0; i < stringReq.Length; i++)
             {
                 var t = stringReq[i];
-                int start = t.LastIndexOf("[") + "[".Length;
-                int end = t.IndexOf("]", start);
-                string result = t.Remove((start <= 0 ? 0 : start), (end - start <= 0 ? 0 : end - start)).Replace(" []", "");
+                var start = t.LastIndexOf("[") + "[".Length;
+                var end = t.IndexOf("]", start);
+                var result = t.Remove((start <= 0 ? 0 : start), (end - start <= 0 ? 0 : end - start)).Replace(" []", "");
                 if (i % 2 == 0) reqString += $"**{result}**: ";
                 else reqString += $"{result}\n";
             }
