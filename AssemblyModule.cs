@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Iced.Intel;
 using Keystone;
 using Serilog;
-using Serilog.Core;
 
 namespace GLaDOSV3.Module.Developers
 {

@@ -5,6 +5,8 @@
     <LangVersion>latest</LangVersion>
     <Version>$(PublishDir)</Version>
     <Description></Description>
+    <AnalysisLevel>preview</AnalysisLevel>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Runtime.Loader;
-using Discord.Commands;
-using Discord.WebSocket;
-using GLaDOSV3.Helpers;
-using GLaDOSV3.Models;
-using Microsoft.Extensions.DependencyInjection;
+﻿using GLaDOSV3.Models;
 
 namespace GLaDOSV3.Module.Developers
 {
