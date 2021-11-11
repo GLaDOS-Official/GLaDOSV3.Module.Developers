@@ -1,4 +1,4 @@
-﻿using GLaDOSV3.Models;
+using GLaDOSV3.Models;
 
 namespace GLaDOSV3.Module.Developers
 {

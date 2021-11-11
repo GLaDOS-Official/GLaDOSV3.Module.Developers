@@ -1,32 +1,48 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Fizzler.Systems.HtmlAgilityPack;
 using GLaDOSV3.Helpers;
 using HtmlAgilityPack;
 using Octokit;
+using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using GLaDOSV3.Module.Developers.WindbgConverter;
 
 namespace GLaDOSV3.Module.Developers
 {
     public class WinapiModule : ModuleBase<ShardedCommandContext>
     {
         private readonly Random rnd = new Random();
+
+        [Command("wingdb", RunMode = RunMode.Async)]
+        [Remarks("wingdb <dump>")]
+        [Summary("Converts WinDbg \"dt\" structure dump to a C structure")]
+        public async Task Wingdb([Remainder] string dump)
+        {
+            if (string.IsNullOrWhiteSpace(dump)) { await this.ReplyAsync("You can't convert something you don't have! Duh.");return;}
+            if(!dump.StartsWith("kd>")) { await this.ReplyAsync("You must include the command you invoked as well!"); return; }
+
+            try
+            {
+                var oof = new WindbgStructure(dump);
+                await this.ReplyAsync($"Here's your structure!\n```cpp\n{oof.AsString(0)}\n```");
+            } catch (Exception) {}
+        }
         [Command("win32", RunMode = RunMode.Async)]
         [Remarks("win32 <winapi>")]
         [Summary("Winapi search!")]
         public async Task WinapiSearch([Remainder] string winapi)
         {
-            var typing = Context.Channel.TriggerTypingAsync();
+            Task typing = Context.Channel.TriggerTypingAsync();
             try
             {
-                var github = new GitHubClient(new ProductHeaderValue("GLaDOS_V3"))
+                GitHubClient github = new GitHubClient(new ProductHeaderValue("GLaDOS_V3"))
                 {
                     Credentials = new Credentials("dddbe430ea9eb99c131ebbb60b6c8e1507731496")
                 };
-                var searchResult =
+                SearchCode[] searchResult =
                     (await
                          github.Search.SearchCode(new
                                                       SearchCodeRequest($"{winapi} repo:MicrosoftDocs/win32 repo:MicrosoftDocs/windows-driver-docs-ddi repo:MicrosoftDocs/windows-driver-docs",
@@ -38,9 +54,9 @@ namespace GLaDOSV3.Module.Developers
                 }
 
                 var resultString = "";
-                foreach (var gitResult in searchResult)
+                foreach (SearchCode gitResult in searchResult)
                 {
-                    var result =
+                    System.Collections.Generic.IReadOnlyList<RepositoryContent> result =
                         await github.Repository.Content.GetAllContents(gitResult.Repository.Id, gitResult.Path);
                     var content = result[0].Content.ToLowerInvariant();
                     var index = content.IndexOf($"[**{winapi.ToLowerInvariant()}**]", StringComparison.Ordinal)
@@ -60,23 +76,23 @@ namespace GLaDOSV3.Module.Developers
 
                     resultString = result[0].Content[index..];
                     resultString = resultString[(resultString.IndexOf("**](", StringComparison.Ordinal) + 4)..];
-                    if (resultString.StartsWith("https://"))
+                    if (resultString.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                     {
-                        index = resultString.IndexOf(".aspx") + 5;
-                        if (index >= 10) resultString = resultString.Substring(0, index);
+                        index = resultString.IndexOf(".aspx", StringComparison.Ordinal) + 5;
+                        if (index >= 10) resultString = resultString[..index];
                         index = resultString.IndexOf("),", StringComparison.Ordinal);
-                        if (index >= 10) resultString = resultString.Substring(0, index);
+                        if (index >= 10) resultString = resultString[..index];
                         index = resultString.IndexOf(") ", StringComparison.Ordinal);
-                        if (index >= 10) resultString = resultString.Substring(0, index);
+                        if (index >= 10) resultString = resultString[..index];
                         index = resultString.IndexOf(',', StringComparison.Ordinal);
-                        if (index >= 10) resultString = resultString.Substring(0, index);
+                        if (index >= 10) resultString = resultString[..index];
                         index = resultString.IndexOf('\n', StringComparison.Ordinal);
-                        if (index >= 10) resultString = resultString.Substring(0, index);
+                        if (index >= 10) resultString = resultString[..index];
 
                     }
                     else
                     {
-                        resultString = resultString.Substring(0, resultString.IndexOf(')', StringComparison.Ordinal));
+                        resultString = resultString[..resultString.IndexOf(')', StringComparison.Ordinal)];
                         resultString =
                             resultString[(resultString.IndexOf("/api/", StringComparison.Ordinal) + 5)..];
                         resultString = $"https://docs.microsoft.com/en-us/windows/win32/api/{resultString}";
@@ -91,7 +107,7 @@ namespace GLaDOSV3.Module.Developers
                     return;
                 }
 
-                var web = await new HtmlWeb().LoadFromWebAsync(resultString);
+                HtmlDocument web = await new HtmlWeb().LoadFromWebAsync(resultString);
 
                 var syntax = web.DocumentNode.QuerySelector("#main > pre > code")?.InnerText; ;
                 EmbedBuilder builder = new EmbedBuilder
@@ -135,9 +151,10 @@ namespace GLaDOSV3.Module.Developers
                 typing.Dispose();
             }
         }
+        #region Utils
         private async Task<string> GetParameters(HtmlNode document)
         {
-            var parameters = document.QuerySelector("#parameters");
+            HtmlNode parameters = document.QuerySelector("#parameters");
             var response = "";
             var i = 0;
             while (parameters.NextSibling != null && parameters.NextSibling.Id != "return-value")
@@ -150,13 +167,11 @@ namespace GLaDOSV3.Module.Developers
                     var fix = "";
                     foreach (HtmlNode row in parameters.SelectNodes("tr"))
                     {
-                        ///This is the row.
                         foreach (HtmlNode cell in row.SelectNodes("th|td"))
                         {
                             if (cell.InnerHtml.ToLowerInvariant() == "meaning" || cell.InnerHtml.ToLowerInvariant() == "value") break;
                             if (cell.Attributes.Count == 1 && cell.Attributes.First().Value == "40%") fix += $"\n{await this.CleanupString(cell.InnerHtml)}\n";
                             else fix += $"{await this.CleanupString(cell.InnerHtml)}";
-                            ///This the cell.
                         }
                     }
                     response += $"\n*{fix}*\n";
@@ -169,7 +184,7 @@ namespace GLaDOSV3.Module.Developers
         {
             fix = fix.Replace("*", "\\*").Replace("\n", " ").Trim();
             Regex r = new Regex("<\\s*a href=\"(.*?)\"[^>]*>(.*?)<\\s*\\/\\s*a>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            var matches = r.Matches(fix);
+            MatchCollection matches = r.Matches(fix);
             foreach (Match t in matches) fix = fix.Replace(t.Groups[0].Value, $"[{t.Groups[2]}](https://docs.microsoft.com/{t.Groups[1]})");
             fix = Regex.Replace(fix, "<a[^>]+id=\"(.*?)\"[^>]*>(.*?)</a>", "", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             r = new Regex("<p>(.*?)</p>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -193,7 +208,7 @@ namespace GLaDOSV3.Module.Developers
         }
         private static async Task<string> GetRequirements(HtmlNode document)
         {
-            var requirements = document.QuerySelector("#requirements");
+            HtmlNode requirements = document.QuerySelector("#requirements");
             requirements = requirements.NextSibling.NextSibling;
             var stringReq = requirements.InnerText.Split('\n').Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             var reqString = "";
@@ -208,5 +223,6 @@ namespace GLaDOSV3.Module.Developers
             }
             return reqString;
         }
+#endregion
     }
 }

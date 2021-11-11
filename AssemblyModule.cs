@@ -1,17 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Threading.Tasks;
 using Discord.Commands;
 using Iced.Intel;
 using Keystone;
-using Serilog;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Threading.Tasks;
 
 namespace GLaDOSV3.Module.Developers
 {
     public class AssemblyModule : ModuleBase<ShardedCommandContext>
     {
-        const ulong codeRIP = 0x400000;
+        private readonly ILogger<AssemblyModule> _logger;
+        public AssemblyModule(ILogger<AssemblyModule> logger) => this._logger = logger;
+
+        private const ulong codeRIP = 0x400000;
 #if true
         [Command("asm", RunMode = RunMode.Async)]
         [Remarks("asm <mode> <hex codes>")]
@@ -21,7 +24,7 @@ namespace GLaDOSV3.Module.Developers
         {
             await Context.Channel.TriggerTypingAsync();
             Mode bitness;
-            
+
             switch (mode)
             {
                 case "x16":
@@ -45,12 +48,12 @@ namespace GLaDOSV3.Module.Developers
             try
             {
                 using Engine keystone = new Engine(Architecture.X86, bitness) { ThrowOnError = true };
-                
+
                 EncodedData enc = keystone.Assemble(asm, codeRIP);
                 await this.ReplyAsync($"Here's your opcodes chef!\n```\n{BitConverter.ToString(enc.Buffer).Replace("-", " ")}\n```");
 
             }
-            catch(Exception ex) { Log.Fatal(ex, ex.Message); }
+            catch (Exception ex) { this._logger.LogCritical(ex, ex.Message); }
         }
 #endif
         [Command("disasm", RunMode = RunMode.Async)]
