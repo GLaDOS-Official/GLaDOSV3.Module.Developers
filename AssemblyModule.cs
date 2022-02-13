@@ -14,7 +14,7 @@ namespace GLaDOSV3.Module.Developers
         private readonly ILogger<AssemblyModule> _logger;
         public AssemblyModule(ILogger<AssemblyModule> logger) => this._logger = logger;
 
-        private const ulong codeRIP = 0x400000;
+        private const ulong CodeRip = 0x400000;
 #if true
         [Command("asm", RunMode = RunMode.Async)]
         [Remarks("asm <mode> <hex codes>")]
@@ -49,7 +49,7 @@ namespace GLaDOSV3.Module.Developers
             {
                 using Engine keystone = new Engine(Architecture.X86, bitness) { ThrowOnError = true };
 
-                EncodedData enc = keystone.Assemble(asm, codeRIP);
+                EncodedData enc = keystone.Assemble(asm, CodeRip);
                 await this.ReplyAsync($"Here's your opcodes chef!\n```\n{BitConverter.ToString(enc.Buffer).Replace("-", " ")}\n```");
 
             }
@@ -99,7 +99,7 @@ namespace GLaDOSV3.Module.Developers
                 var codeBytes = bytes.ToArray();
                 var codeReader = new ByteArrayCodeReader(codeBytes);
                 var decoder = Decoder.Create(bitness, codeReader);
-                decoder.IP = codeRIP;
+                decoder.IP = CodeRip;
                 var endRip = decoder.IP + (uint)codeBytes.Length;
 
                 var instructions = new List<Instruction>();
@@ -130,7 +130,7 @@ namespace GLaDOSV3.Module.Developers
                     returnOutput += instr.IP.ToString("X16");
                     returnOutput += " ";
                     var instrLen = instr.Length;
-                    var byteBaseIndex = (int)(instr.IP - codeRIP);
+                    var byteBaseIndex = (int)(instr.IP - CodeRip);
                     for (var i = 0; i < instrLen; i++)
                         returnOutput += codeBytes[byteBaseIndex + i].ToString("X2");
                     var missingBytes = 10 - instrLen;

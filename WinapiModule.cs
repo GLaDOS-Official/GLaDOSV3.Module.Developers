@@ -20,15 +20,14 @@ namespace GLaDOSV3.Module.Developers
         [Remarks("wingdb <dump>")]
         [Summary("Converts WinDbg \"dt\" structure dump to a C structure")]
         public async Task Wingdb([Remainder] string dump)
-        {
-            if (string.IsNullOrWhiteSpace(dump)) { await this.ReplyAsync("You can't convert something you don't have! Duh.");return;}
-            if(!dump.StartsWith("kd>")) { await this.ReplyAsync("You must include the command you invoked as well!"); return; }
-
+        { 
+            if (!dump.StartsWith("kd>")) { await this.ReplyAsync("You must include the command you invoked as well!"); return; }
             try
             {
                 var oof = new WindbgStructure(dump);
                 await this.ReplyAsync($"Here's your structure!\n```cpp\n{oof.AsString(0)}\n```");
-            } catch (Exception) {}
+            }
+            catch (Exception) { }
         }
         [Command("win32", RunMode = RunMode.Async)]
         [Remarks("win32 <winapi>")]
@@ -43,10 +42,7 @@ namespace GLaDOSV3.Module.Developers
                     Credentials = new Credentials("dddbe430ea9eb99c131ebbb60b6c8e1507731496")
                 };
                 SearchCode[] searchResult =
-                    (await
-                         github.Search.SearchCode(new
-                                                      SearchCodeRequest($"{winapi} repo:MicrosoftDocs/win32 repo:MicrosoftDocs/windows-driver-docs-ddi repo:MicrosoftDocs/windows-driver-docs",
-                                                                        "MicrosoftDocs", "win32"))).Items.ToArray();
+                    (await github.Search.SearchCode(new SearchCodeRequest($"{winapi} repo:MicrosoftDocs/win32 repo:MicrosoftDocs/windows-driver-docs-ddi repo:MicrosoftDocs/windows-driver-docs", "MicrosoftDocs", "win32"))).Items.ToArray();
                 if (searchResult.Length == 0)
                 {
                     await this.ReplyAsync("Windows function not found!");
@@ -93,8 +89,7 @@ namespace GLaDOSV3.Module.Developers
                     else
                     {
                         resultString = resultString[..resultString.IndexOf(')', StringComparison.Ordinal)];
-                        resultString =
-                            resultString[(resultString.IndexOf("/api/", StringComparison.Ordinal) + 5)..];
+                        resultString = resultString[(resultString.IndexOf("/api/", StringComparison.Ordinal) + 5)..];
                         resultString = $"https://docs.microsoft.com/en-us/windows/win32/api/{resultString}";
                     }
 
@@ -223,6 +218,6 @@ namespace GLaDOSV3.Module.Developers
             }
             return reqString;
         }
-#endregion
+        #endregion
     }
 }
