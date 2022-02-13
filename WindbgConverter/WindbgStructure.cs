@@ -12,7 +12,7 @@ namespace GLaDOSV3.Module.Developers.WindbgConverter
 {
     internal class WindbgStructure
     {
-        private static Dictionary<string, string> knownTypes = new Dictionary<string, string>()
+        private static readonly Dictionary<string, string> KnownTypes = new Dictionary<string, string>()
         {
             { "void", "VOID" },
             { "Void", "VOID" },
@@ -98,7 +98,7 @@ namespace GLaDOSV3.Module.Developers.WindbgConverter
             }
 
             typeString = typeString.Trim();
-            if (knownTypes.TryGetValue(typeString, out var sec)) typeString = sec;
+            if (KnownTypes.TryGetValue(typeString, out var sec)) typeString = sec;
             else if (typeString[0] == '_') typeString = typeString[1..];
             switch (pointerCount)
             {

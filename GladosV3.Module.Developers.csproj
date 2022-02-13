@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -28,8 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Iced" Version="1.15.0" />
-    <PackageReference Include="keystoneengine.csharp" Version="0.9.1.1" />
+    <PackageReference Include="Iced" Version="1.16.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2022.1.0-eap3" />
     <PackageReference Include="Octokit" Version="0.50.0" />
   </ItemGroup>
 
